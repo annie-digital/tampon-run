@@ -1,0 +1,361 @@
+<html>
+    <head>
+        <script src="processing-1.4.1.js"></script>
+        <script type="text/processing" data-processing-target="canvas">
+            class Cloud {
+                var xCloud;
+                var yCloud;
+                var cloudS = -2;
+
+                Cloud (x, y) {
+                    xCloud = x;
+                    yCloud = y;
+
+                }
+
+                void showCloud() {
+                    fill(255);
+                    rect(xCloud, yCloud, 100, 5);
+                    rect(xCloud-40, yCloud-5, 210, 5);
+                    rect(xCloud-40, yCloud-5, 200, 5);
+                    rect(xCloud-60, yCloud-10, 270, 5);
+                    rect(xCloud-60, yCloud-15, 220, 5);
+                    rect(xCloud-70, yCloud-25, 200, 10);
+                    rect(xCloud-60, yCloud-35, 180, 10);
+                    rect(xCloud-50, yCloud-45, 60, 10);
+                    rect(xCloud+20, yCloud-45, 90, 10);
+                    rect(xCloud+30, yCloud-55, 70, 10);
+                    rect(xCloud+40, yCloud-65, 50, 10);
+
+                    rect(xCloud-40, yCloud-55, 40, 10);
+                }
+
+                void moveCloud() {
+                    xCloud = xCloud +cloudS;
+                    if (xCloud < -300) {
+                        xCloud = CANVAS_WIDTH + 50;
+                    }
+                }
+            }
+
+            class Building {
+                var xBuild;
+                var yBuild;
+                var buildSpeed;
+
+                Building(x, y, z, s) {
+                    xBuild = x;
+                    yBuild = y;
+                    buildw = z;
+                    buildSpeed = s;
+
+                }
+
+                void showBuilding(colorInt) {
+                    if (colorInt === 0) {
+                        fill(red);
+                    } else if (colorInt === 1){
+                        fill(orange);
+                    } else {
+                        fill(blue);
+                    }
+
+                    rect(xBuild, yBuild, buildw, CANVAS_HEIGHT - yBuild);
+                }
+
+                void moveBuilding() {
+                    xBuild = xBuild + buildSpeed;
+                }
+
+                boolean hitBuild() {
+                    if (xBuild > CANVAS_WIDTH) {
+                        //println("true");
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+            }
+
+            class Player {
+                var yPlayer;
+                var xPlayer;
+                var height;
+                var w;
+                var isFalling;
+
+                Player(y) {
+                    yPlayer = y;
+                    xPlayer = 100;
+                    height = 50;
+                    w = 30;
+                }
+
+                void showPlayer() {
+                    fill(blue);
+                    rect(xPlayer,yPlayer, w, height);
+                }
+
+                void fallingPlayer() {
+                    for (var i = 0; i < backList.length; i ++){
+                        if (backList[i].xBuild < xPlayer + w && backList[i].xBuild > xPlayer) {
+                            if (yPlayer + height > backList[i].yBuild){
+                                yPlayer = backList[i].yBuild-height;
+                            } else {
+                                console.log(yPlayer);
+                                yPlayer = yPlayer + 0.5;
+                            }
+                        }
+                    }
+                }
+            }
+
+            class Enemy {
+                var yEnemy;
+                var xEnemy;
+                var height;
+                var w;
+                var enemySpeed;
+
+                Enemy(s) {
+                    yEnemy = 350;
+                    xEnemy = 750;
+                    height = 50;
+                    w = 30;
+                    enemySpeed = s;
+                }
+
+                void showEnemy() {
+                    fill(orange);
+                    rect(xEnemy,yEnemy, w, height);
+                }
+
+                void moveEnemy() {
+                    xEnemy = xEnemy - enemySpeed;
+                }
+
+                void falling() {
+                    for (var i = 0; i < backList.length; i ++){
+                        if (backList[i].xBuild < xEnemy + w && backList[i].xBuild > xEnemy) {
+                            if (yEnemy + height > backList[i].yBuild){
+                                yEnemy = backList[i].yEnemy-height;
+                            } else {
+                                console.log(yEnemy);
+                                yEnemy = yEnemy + 0.5;
+                            }
+                        }
+                    }
+                }
+            }
+
+            var CANVAS_HEIGHT = 500;
+            var CANVAS_WIDTH = 700;
+
+
+            //buildings
+            var backList = [];
+            var backw = 200;
+            var backY;
+
+            //for building creation (@)
+            var nextX = 0;
+
+            //enemy list
+            var enemyList = [];
+
+            //colors
+            color yellow = color(255,252, 25);
+            color red = color(178,18,18);
+            color orange = color(255,83, 13);
+            color blue = color(9, 113, 178);
+
+            void setup() {
+              size(CANVAS_WIDTH,CANVAS_HEIGHT);
+              background(yellow);
+
+              makeBuild(backList, backw, backY, -3, 350, 450);
+
+              cloud = new Cloud(800, 150);
+              player = new Player(350);
+              enemy = new Enemy();
+              
+              fill(255);
+              noStroke();
+              PFont fontA = loadFont("courier");
+              textFont(fontA, 14);  
+            }
+
+            //ENEMY LIST FUNCTIONS
+            void makeEnemy() {
+                var willItBlend = Math.floor((Math.random() * 100) + 1); //random number between 1 and 10
+                var speed = Math.floor((Math.random() * 10) + 1);
+                if (willItBlend == 1) {
+                    enemyList.push(new Enemy(speed));
+                }
+            }
+
+            void removeEnemy(){
+                for (var x = 0; x < enemyList.length; x++) {
+                    if (enemyList[x].xEnemy < 0 - enemyList[x].w) {
+                        enemyList.splice(x,1);
+                    }
+                }
+            }
+
+            void kill() {
+                for(var i = 0; i < enemyList.length; i++) {
+
+                    if (player.xPlayer + player.w >= enemyList[i].xEnemy 
+                        && player.xPlayer <= enemyList[i].xEnemy 
+                        && player.yPlayer <= enemyList[i].yEnemy){
+                        //&& player.yPlayer + player.h >= enemyList[i].yEnemy){
+                        enemyList.splice(i,1);
+                        console.log("killed");
+                    }
+                }  
+            }
+
+
+            //BUILDING LIST FUNCTIONS
+            void makeBuild(buildingList, w, y, speed, low, high) {
+                nextX = 0;
+                for (var x = 0; x < CANVAS_WIDTH; x += w){
+                    y = 400;
+                    buildingList.push(new Building(nextX, y, w, speed));
+                    nextX = nextX + w;
+                }
+            }
+
+
+            void continueBuild(buildingList, w, y, speed, low, high) {
+                var startX = buildingList[0].xBuild + buildingList.length * w;
+                var added = 0;
+                if (startX < CANVAS_WIDTH) {
+                    y = 400;
+                    buildingList.push(new Building(startX, y, w, speed));
+                    added = added + 1; //monitors how many buildings were added
+
+                    if (buildingList[0].xBuild < -(w*2)) { //buffer to delete building offscreen
+                        for (var i = 0; i < added; i ++) { //deletes as many buildings as were added
+                            buildingList.splice(0,1);
+                        }
+                    }
+                }
+            }
+
+            void draw(){
+                background(yellow);
+
+                //cloud
+                cloud.showCloud();
+                cloud.moveCloud();
+
+                //player
+                player.showPlayer();
+
+                //enemy
+                makeEnemy();
+                for (var i = 0; i < enemyList.length; i ++) {
+                    enemyList[i].moveEnemy();
+                    enemyList[i].showEnemy();
+                }
+
+                //buildings
+                for (var x = 0; x < backList.length; x ++) {
+                    backList[x].showBuilding(0);
+                    backList[x].moveBuilding();
+                }
+
+                //remove buildings and enemies
+                continueBuild(backList, backw, backY, -3, 200, 500);
+                removeEnemy();
+
+            }
+
+            void keyPressed() {
+                if (keyCode == 32) {
+                    console.log("SPACE PRESSED");
+                    kill();
+                }
+
+            }
+        </script>
+    </head>
+    <body>
+        <canvas id="canvas"></canvas>
+        <script type="text/javascript">
+
+            var canvas = document.getElementById('canvas');
+            var ctx = canvas.getContext('2d');
+
+            function spriteSheet(path, frameWidth, frameHeight, frameSpeed, endFrame) {
+
+                //LOAD IMAGE
+                image = new Image();
+                var framesPerRow;
+
+                //calculate #frames in a row after image loadw
+                var self = this;
+                image.onload = function() {
+                    framesPerRow = Math.floor(image.width/frameWidth);
+                };
+
+                image.src = path;
+
+                //LOOP IMAGES
+                var currentFrame = 0;
+                var counter = 0;
+
+                this.update = function() {
+
+                    //update to the next frame after elapsed time
+                    if (counter == frameSpeed - 1) {
+                        currentFrame = (currentFrame + 1)%endFrame;
+                    }
+
+                    //update the counter
+                    counter = (counter + 1)  % frameSpeed;
+                };
+
+                //DRAW FRAME
+                this.draw = function(x, y) {
+                    //get row and col of frame
+                    var row = Math.floor(currentFrame/framesPerRow);
+                    var col = Math.floor(currentFrame%framesPerRow);
+
+                    ctx.drawImage(
+                        image,
+                        col * frameWidth, row * frameHeight,
+                        frameWidth, frameHeight,
+                        x, y,
+                        frameWidth, frameHeight);
+                };
+
+            }
+
+            bbGirl = new spriteSheet('bbGirl30.png', 30, 30, 5, 2);
+
+            animate();
+
+            var requestAnimFrame = (function(){
+                return  window.requestAnimationFrame       ||
+                        window.webkitRequestAnimationFrame ||
+                        window.mozRequestAnimationFrame    ||
+                        window.oRequestAnimationFrame      ||
+                        window.msRequestAnimationFrame     ||
+                        function(callback, element){
+                          window.setTimeout(callback, 1000 / 60);
+                        };
+              })();
+
+            function animate() {
+                console.log("happening");
+                requestAnimationFrame(animate);
+                ctx.clearRect(0,0,150,150);
+
+                bbGirl.update();
+                bbGirl.draw(5,5);
+            }
+        </script>
+    </body>
+</html>

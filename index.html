@@ -1,0 +1,1117 @@
+<html>
+    <head>
+        <title>Tampon Run!</title>
+        <style type="text/css">
+            #mycanvas {
+                position: relative;
+                padding-left:0;
+                padding-right: 0;
+                margin-left: auto;
+                margin-right: auto;
+                margin-top: 50px;
+                display: block;
+                border-style: solid;
+                border-width: 5px;
+                border-color: rgb(0,0,0);
+            }
+
+            #creators {
+                position: absolute;
+                bottom: 10px;
+                right: 10px;
+                padding-left:0;
+                padding-right: 0;
+                margin-left: auto;
+                margin-right: auto;
+                margin-top: 50px;
+                display: block;
+            }
+
+        </style>
+        <script src="lib/processing-1.4.1.min.js"></script>
+        <script src="lib/buzz.min.js" type="text/javascript"></script>
+        <script type="text/processing" data-processing-target="creators">
+            var drawing = 0;
+            PImage namer;
+
+            void setup() {
+                size(300,325);
+                background(255);
+                sophie = new Animation("sophie", 2, 15);
+                andy = new Animation("andy",1, 10);
+                namer = loadImage("res/names0000.png");
+            }
+
+            void draw() {
+                background(255);
+                image(namer, 0,0);
+
+                andy.display(50,100);
+                sophie.display(180,80);
+
+                if (drawing == 1000) {
+                   drawing = 0;
+                } else {
+                    drawing++;
+                }
+            }
+
+            class Animation {
+                PImage[] images;
+
+                int imageCount; //number of images 
+                int frame; //which image is currently being shown
+                int rate;
+
+                Animation(imagePrefix, count, frameR) {
+                    imageCount = count;
+                    images = new PImage[imageCount];
+                    rate = frameR;
+
+                    //populates the array with images
+                    for (var i = 0; i < imageCount; i++) {
+                        String filename = "res/" + imagePrefix + nf(i, 4) + ".png";
+                        images[i] = loadImage(filename);
+                    }
+                }
+
+                void display(float xPos, yPos) {
+                    if (drawing % rate == 1) {
+                        frame = (frame + 1) % imageCount;
+                    }
+
+                    image(images[frame],xPos, yPos);
+                }
+
+                //mysterious files, not sure if they work
+                int getWidth() {
+                    return images[0].width;
+                }
+                int getHeight() {
+                    return images[0].height;
+                }
+            }
+        </script>
+
+        <script type="text/processing" data-processing-target="mycanvas">
+
+            //dimensions
+            var CANVAS_HEIGHT = 500;
+            var CANVAS_WIDTH = 700;
+
+            //colors
+            color yellow = color(255,252, 25);
+            color red = color(178,18,18);
+            color orange = color(255,83, 13);
+            color blue = color(9, 113, 178);
+            color pink = color(255, 182, 193);
+
+            //tampon variables
+            var score = 0;
+            var highscore = 0;
+
+            //slows animation rate of entities
+            var drawCount = 0;
+
+            //player variables
+            var tampon = 10;
+            var attacking = false;
+
+            //declares all of the sounds
+                //each sound file used must be in the res/sound path in two different formats-- .ogg ad .mp3
+            var jumpSound = new buzz.sound("res/sound/jumpSound", {formats: ["ogg", "mp3"]});
+            var tamponSound = new buzz.sound("res/sound/tamponSound", {formats: ["ogg", "mp3"]});
+            var gameOverSound = new buzz.sound("res/sound/gameOverSound", {formats: ["ogg", "mp3"]});
+            var beethovenSound = new buzz.sound("res/sound/beethovenSound", {formats: ["ogg", "mp3"]});
+            var ouchSound = new buzz.sound("res/sound/ouchSound", {formats: ["ogg", "mp3"]});
+            var shootSound = new buzz.sound("res/sound/shootSound", {formats: ["ogg", "mp3"]});
+
+            //mute boolean
+            var muted = false;
+
+            //allows playing with buzz API
+            void play(soundToPlay) {
+                soundToPlay.play();
+            }
+
+            void pauseSound(soundToPlay) {
+                soundToPlay.pause();
+            }
+        
+            void setup() {
+                size(CANVAS_WIDTH,CANVAS_HEIGHT);
+                background(red);
+                
+                state = new GameState(0); //set to homepage
+
+                //aesthetics
+                lamps = new LampFactory();
+                clouds = new CloudFactory();
+
+                //makes the ground
+                buildings = new BuildingFactory(200, 400, -3, false);
+
+                //enemie created
+                enemies = new EnemyFactory("eWalk", 1);
+
+                //demo
+                demo = new Player(300, 340);
+                demoGun = new Gun(demo.xPlayer);
+
+                 //player created and armed
+                player = new Player(100, 340);
+                gun = new Gun(player.xPlayer);
+
+                //tampon reload
+                duaneReade = new DuaneReade();
+
+                noStroke();
+            }
+
+            void draw(){
+                //controls which page is being displayed
+                state.show();       
+
+                //global variable drawCount
+                if (drawCount >= 1000) {
+                    drawCount = 1;
+                } else {
+                    drawCount++;
+                }
+            }
+        
+            //KEY FUNCTIONS
+            void keyPressed() {
+                /*SHIFT: 16
+                 *S: 83
+                 *SPACE: 32
+                 *UP: 38
+                page 0: home
+                page 1: statement-one
+                page 6: statement-two
+                page 7: statement-three
+                page 8: statement-four
+                page 9: statement-five
+                page 2: instructions
+                page 3: game play
+                page 4: game over
+                page 5: pause screen
+                */
+                //mute
+                if (keyCode == 77) {
+                    if (muted) {
+                        beethovenSound.unmute();
+                        muted = false;
+                    } else {
+                        beethovenSound.mute();
+                        muted = true;
+                    }
+                }
+                //going forward
+                if (keyCode == 16 && state.page==0){
+                    state.page = 1;
+                } else if (keyCode == 39 && state.page ==1) {
+                    state.page = 6;
+                } else if (keyCode == 39 && state.page == 6){
+                    state.page = 7;
+                } else if (keyCode == 39 && state.page == 7){
+                    state.page = 8;
+                } else if (keyCode == 39 && state.page == 8){
+                    state.page = 9; 
+                } else if (keyCode == 39 && state.page == 9){
+                    state.page = 10;  
+                } else if (keyCode == 39 && state.page ==10){
+                    state.page = 2; 
+                } else if (keyCode == 16 && state.page == 2){
+                    state.page = 3;
+                } else if (keyCode == 83 && state.page==4) {
+                    state.page = 3;
+                    enemies.clearEnemyList();
+                    gun.clearAmmoList();
+                    tampon = 10;
+                    score = 0;
+                    tampon = 10;
+                } 
+
+                //going backwards
+                if (keyCode == 37 && state.page == 6){
+                    state.page = 1;
+                } else if (keyCode == 37 && state.page == 7){
+                    state.page = 6;
+                } else if (keyCode == 37 && state.page == 8){
+                    state.page = 7;
+                } else if (keyCode == 37 && state.page == 9){
+                    state.page = 8;
+                } else if (keyCode == 37 && state.page == 10){
+                    state.page = 9;
+                } else if (keyCode == 37 && state.page == 2){
+                    state.page = 10;
+                }
+
+
+                //gameplay controls
+                if (state.page == 3 || state.page == 2) {
+                    if (keyCode == 32) {
+                        attacking = true;
+                        if (state.page==3) {
+                            tampon = tampon - 1;
+                        }
+                        demoGun.shoot();
+                        gun.shoot();  
+                    }
+
+                    if (keyCode == 38)  {
+                        play(jumpSound);
+                        demo.jumpState = 1;
+                        player.jumpState = 1;
+                    }    
+                }
+
+                if (keyCode == 80 ) {
+                    if (state.page == 3) {
+                        state.page = 5;
+                    } else if (state.page == 5) {
+                        state.page = 3;
+                    }
+                }
+            }
+
+            void keyReleased() {
+                //stop attacking
+                if (keyCode == 32) {
+                    attacking = false;
+                }
+            }
+
+            //STUFF??
+
+            class Animation {
+                PImage[] images;
+
+                int imageCount; //number of images 
+                int frame; //which image is currently being shown
+                int rate;
+
+                Animation(imagePrefix, count, frameR) {
+                    imageCount = count;
+                    images = new PImage[imageCount];
+                    rate = frameR;
+
+                    //populates the array with images
+                    for (var i = 0; i < imageCount; i++) {
+                        String filename = "res/" + imagePrefix + nf(i, 4) + ".png";
+                        images[i] = loadImage(filename);
+                    }
+                }
+
+                void display(float xPos, yPos) {
+                    if (drawCount % rate == 1) {
+                        frame = (frame + 1) % imageCount;
+                    }
+
+                    image(images[frame],xPos, yPos);
+                }
+
+                //mysterious files, not sure if they work
+                int getWidth() {
+                    return images[0].width;
+                }
+                int getHeight() {
+                    return images[0].height;
+                }
+            }
+            
+            //Game State Manager
+            class GameState {
+                var page;
+                color tamponWarning;
+                Animation title;
+                Animation statement;
+                Animation instructions;
+                Animation over;
+
+                Animation tampIntro;
+                var tampY;
+                var bigTampX;
+                Animation girlIntro;
+
+                PImage pausePage;
+                PImage statementOne;
+                PImage statementTwo;
+                PImage statementThree;
+                PImage statementFour;
+                PImage statementFive;
+                PImage instructOne;
+
+                GameState(p) {
+                    tamponWarning = color(0);
+                    tampIntro = new Animation("ammo", 4, 10);
+                    tampY = 150;
+                    bigTampX = -10;
+
+                    page = p; //page counter
+                    font = loadFont("Helvetica");
+                    title = new Animation("title", 2, 20);
+
+                    girlIntro = new Animation("walk",2,5);
+                    
+                    statementOne = loadImage("res/statementOne0000.png");
+                    animOne = new Animation("animOne", 2, 15);
+
+                    statementTwo = loadImage("res/statementTwo0000.png");
+                    animTwo = new Animation("animTwo", 3, 15);
+
+                    statementThree = loadImage("res/statementThree0000.png");
+                    animThreeOne = new Animation("animThreeOne", 2, 15);
+                    animThree = new Animation("animThree", 1, 15);
+
+                    statementFour = loadImage("res/statementFour0000.png");
+                    animFour = new Animation("animFour", 2, 15);
+
+                    statementFive = loadImage("res/statementFive0000.png");
+                    animFive = new Animation("animFive", 4, 15);
+
+                    instructOne = loadImage("res/learn0000.png");
+                    instructTwo = new Animation("instruct", 2, 15);
+
+                    pausePage = loadImage("res/pause0000.png");
+
+                    over = new Animation ("over", 2, 20);
+    
+                }
+
+                //controls which to display
+                void show() {
+                    if (page == 0) {
+                        home();
+                    } else if (page == 1) {
+                        play(beethovenSound);
+                        beethovenSound.loop(); //start stoundtrack
+                        artistOne();
+                    } else if (page == 6) {
+                        artistTwo();
+                    } else if (page == 7) {
+                        artistThree();
+                    } else if (page == 8){
+                        artistFour();
+                    } else if (page == 9){
+                        artistFive();
+                    } else if (page == 10){
+                        instructionOne();
+                    } else if (page == 2){
+                        instructionTwo();
+                    } else if (page == 3){
+                        startGame();
+                    }else if(page == 4) {
+                        gameOver();
+                    } else if (page == 5) {
+                        pauseGame();
+                    }
+                }
+
+                void home(){
+                    background(red);
+                    textFont(font, 12); 
+                    textSize(15);
+                    title.display(0,0);
+                    /*text("Every woman menstruates for a large portion of her life. It is, by all means, normal. Yet most people, women and men alike, feel uncomfortable talking about anything having to do with menstruation. The taboo that surrounds it teaches women that a normal and natural bodily function is embarrassing and crude.", 50, 110, 600, 70);
+                    text("Tampon Runner is a way of discussing the taboo in an accessible way. Instead of holding a gun, the runner holds tampons, and instead of killing enemies, the runner hands out the tampons to passers-by.  Although the concept of the video game may be strange, it is stranger that our society accepts and normalizes guns and violence through video games, yet we still find tampons and menstruation unspeakable.  Hopefully one day menstruation will be as normal, if not more so, than guns and violence have become in our society; normal enough to place in a video game without a second thought.", 50, 200, 600, 70);
+                    textSize(30);
+                    text("PRESS SHIFT TO BEGIN", 260, 350);*/
+
+                }
+
+                void artistOne(){
+                    image(statementOne,0,0);
+                    girlIntro.display(300, 340);
+                    animOne.display(0,100);
+                    
+                }
+
+                void artistTwo(){
+                    image(statementTwo,0,0);
+                    animTwo.display(0, 150);
+                }
+
+                void artistThree(){
+                    background(red);
+                    image(statementThree,0,0);
+                    if (tampY < 280) {
+                        animThree.display(0,130);
+                        tampY += 3;
+                    } else if (tampY >= 280) {
+                        animThreeOne.display(0,130);
+                    }
+                    tampIntro.display(325, tampY);
+                }
+
+                void artistFour(){
+                    image(statementFour,0,0);
+                    animFour.display(0,150);
+                }
+
+                void artistFive(){
+                    image(statementFive,0,0);
+                    animFive.display(bigTampX,150);
+                    if (bigTampX > 1000) {
+                        bigTampX = -300;
+                    } else {
+                        bigTampX+=5;
+                    }
+                }
+                
+                void instructionOne(){
+                    image(instructOne,0,0);
+                }
+
+                void instructionTwo(){
+                    instructTwo.display(0,0);
+                    demo.showPlayer();
+                    demo.jump();
+                    demoGun.animate();
+                }
+
+                void startGame() {
+                    background(100);
+                    //background(150, 201, 223);
+                    textFont(font, 30); 
+                    text("score: " + score, 15, 50);
+                    text("high score: " + highscore, 15, 80);
+                    text("tampons: ", 15, 110);
+                    fill(tamponWarning);
+                    text(tampon, 140, 110);
+
+                    //clouds
+                    clouds.animate();
+
+                    //lamp
+                    lamps.showLampList();
+                    lamps.moveLampList();
+
+                    //tamp generate
+                    duaneReade.animate();
+
+                    //building
+                    buildings.animate();
+
+                    //player
+                    player.showPlayer();
+                    player.jump();
+
+                    //ammo
+                    gun.animate();
+
+                    //low on tampons
+                    if ((tampon <= 5) && (drawCount % 15 <= 2)) {
+                        tamponWarning = color(red);
+                    } else {
+                        tamponWarning = color(0);
+                    }
+
+                    //enemy
+                    enemies.animate(100);
+                    if (gun.ammoList.length > 0) {
+                        enemies.killEnemies();
+                    }
+
+                    if (tampon<=0){//set to game over
+                        state.page= 4;
+                    }
+                }
+                    
+                void gameOver(){
+                    background(red);
+                    textFont(font, 30);
+                    fill(255);
+                    //text("Thanks for playing!", 200, 200);
+                    over.display(0,0);
+                    text("SCORE: " + score, 225, 400);
+                    if (score > highscore){
+                        highscore = score;
+                    } else {
+                        text("HIGH SCORE: " + highscore, 225, 435);
+                    }
+
+                    //text("PRESS S TO RESTART", 200, 300);
+                    //textSize(100);  
+                }
+
+                void pauseGame() {
+                    image(pausePage, 0, 0);
+                }
+            }
+
+            //PRETTY THINGS: cloud, lamppost
+            class Lamppost {
+                var yPost;
+                var xPost;
+                var pSpeed;
+                PImage lamp;
+
+                Lamppost(x) {
+                    xPost = x;
+                    yPost = 150;
+                    pSpeed = 3;
+                    lamp = new loadImage("res/lamppost0000.png");
+                }
+
+                void showLamp() {
+                    image(lamp, xPost, yPost);
+                }
+
+                void moveLamp() {
+                    xPost = xPost - pSpeed;
+                    if (xPost < -100) {
+                        xPost = 750;
+                    }
+                }
+            }
+
+            class LampFactory {
+
+                var lampList;
+                
+                LampFactory() {
+                    lampList = [];
+
+                    for (var i = 0; i < CANVAS_WIDTH; i += 290) {
+                        lampList.push(new Lamppost(i));
+                    }
+                }
+
+                void showLampList() {
+                    for (var i = 0; i < lampList.length; i ++) {
+                        lampList[i].showLamp();
+                    }
+                }
+
+                void moveLampList() {
+                    for (var i = 0; i < lampList.length; i ++) {
+                        lampList[i].moveLamp();
+                    }
+                }
+
+                void removeLampList() {
+                    if(lampList[0].xPost < -100) {
+                        lampList.push(new Lamppost(750));
+                        lampList.splice[0,1];
+                    }
+                }
+            }
+
+
+            class Cloud {
+                var xCloud;
+                var yCloud;
+                var cloudS;
+                var c;
+
+                Cloud (y, s) {
+                    xCloud = 800;
+                    yCloud = y;
+                    cloudS = -s;
+                    //i played with the colors to make different ones evry tiemz, just set to 255 if you want to revert
+                    //c = Math.floor((Math.random() * 255) + 1);
+                }
+
+                void showCloud() {
+                    fill(255);
+                    rect(xCloud, yCloud, 100, 5);
+                    rect(xCloud-40, yCloud-5, 210, 5);
+                    rect(xCloud-40, yCloud-5, 200, 5);
+                    rect(xCloud-60, yCloud-10, 270, 5);
+                    rect(xCloud-60, yCloud-15, 220, 5);
+                    rect(xCloud-70, yCloud-25, 200, 10);
+                    rect(xCloud-60, yCloud-35, 180, 10);
+                    rect(xCloud-50, yCloud-45, 60, 10);
+                    rect(xCloud+20, yCloud-45, 90, 10);
+                    rect(xCloud+30, yCloud-55, 70, 10);
+                    rect(xCloud+40, yCloud-65, 50, 10);
+
+                    rect(xCloud-40, yCloud-55, 40, 10);
+                }
+
+                void moveCloud() {
+                    xCloud = xCloud +cloudS;
+                }
+            }
+
+            class CloudFactory {
+                var cloudList;
+
+                CloudFactory() {
+                    cloudList = [];
+                }
+
+                void animate() {
+                    var willItBlend = Math.floor((Math.random() * 250) + 1); //random number between 1 and 100
+                    if (willItBlend == 1) {
+                        var y = Math.floor((Math.random() * 200) + 50);
+                        var cs = Math.floor((Math.random() * 5) + 2);
+                        cloudList.push(new Cloud(y,cs));
+                    }
+                    showCloudList();
+                    moveCloudList();
+                    removeCloudList();
+                }
+
+                void moveCloudList() {
+                    for (var i = 0; i < cloudList.length; i ++) {
+                        cloudList[i].moveCloud();
+                    }
+                }
+
+                void showCloudList() {
+                    for (var i = 0; i < cloudList.length; i ++) {
+                        cloudList[i].showCloud();
+                    }
+                }
+
+                void removeCloudList(){
+                    for (var x = 0; x < cloudList.length; x++) {
+                        if (cloudList[x].xCloud < -400) {
+                            cloudList.splice(x,1);
+                        }
+                    }
+                }
+
+                void clearCloudList() {
+                     cloudList = [];
+                }
+            }
+
+            //BOOM BOOM
+            class Gun {
+                var ammoList;
+                var setX;
+
+                Gun(x) {
+                    setX = x;
+                    ammoList = [];
+                }
+
+                void animate() {
+                    if (ammoList.length > 0) {
+                        showAmmoList();
+                        moveAmmoList();
+                        removeAmmoList();
+                    }
+                }
+
+                void shoot() {
+                    play(shootSound);
+                    ammoList.push(new Ammo(setX));
+                }
+
+                void moveAmmoList() {
+                    for (var i = 0; i < ammoList.length; i ++) {
+                        ammoList[i].moveAmmo();
+                    }
+                }
+
+                void showAmmoList() {
+                    for (var i = 0; i < ammoList.length; i ++) {
+                        ammoList[i].showAmmo();
+                    }
+                }
+
+                void removeAmmoList(){
+                    for (var x = 0; x < ammoList.length; x++) {
+                        if (ammoList[x].xAmmo > CANVAS_WIDTH) {
+                            ammoList.splice(x,1);
+                        }
+                    }
+                }
+
+                void clearAmmoList() {
+                     ammoList = [];
+                }
+            }
+
+            class Ammo {
+                var xAmmo;
+                var yAmmo;
+                var speed;
+                var w;
+                var h;
+                Animation ammo;
+
+                Ammo(x) {
+                    ammo = new Animation("ammo", 4, 6);
+                    yAmmo = player.yPlayer + 30;
+                    xAmmo = x;
+                    speed = 5;
+                    w = ammo.getWidth();
+                    h = ammo.getHeight();
+                }
+
+                void showAmmo() {
+                    ammo.display(xAmmo, yAmmo);
+                }
+
+                void moveAmmo() {
+                    xAmmo = xAmmo + speed;
+                }
+            }
+
+            //FACTORIESS
+            class BuildingFactory {
+                var buildList;
+                var nextX;
+                var width;
+                var floor;
+                var random;
+
+                /**@param
+                 * w: width
+                 * f: floor (height)
+                 * s: speed
+                 * b: random generate (not sure if it works lEl)
+                **/
+
+                BuildingFactory(w, f, s, b) {
+                    nextX = 0;
+                    buildList = [];
+                    width = w;
+                    speed = s;
+                    random = b;
+
+                    //populates
+                    for (var x = 0; x < CANVAS_WIDTH; x += width){
+                        if (random) {
+                            floor = Math.floor((Math.random() * f + 100) + 100);
+                        } else {
+                            floor = f;
+                        }
+                        buildList.push(new Building(nextX, floor, width, speed));
+                        nextX = nextX + width;
+                    }
+                }
+
+                //animate buildings
+                void animate() {
+                    showBuildList();
+                    moveBuildList();
+                    updateBuildList();
+                }
+
+                //make random floor
+                void randFloor() {}
+
+                //shows
+                void showBuildList() {
+                    for (var x = 0; x < buildList.length; x ++){
+                        buildList[x].showBuilding();
+                    }
+                }
+
+                void moveBuildList() {
+                    for (var x = 0; x < buildList.length; x ++){
+                        buildList[x].moveBuilding();
+                    }
+                }
+
+                void updateBuildList() {
+                    var startX = buildList[0].xBuild + buildList.length * width;
+                    var added = 0;
+
+                    if (startX < CANVAS_WIDTH) {
+                        if (random) {
+                            floor = Math.floor((Math.random() * floor + 100) + 100);
+                        } else {
+                            floor = floor;
+                        }
+                        buildList.push(new Building(startX, floor, width, speed));
+                        added = added + 1; //monitors how many buildings were added
+                        if (buildList[0].xBuild < -(width*2)) { //buffer to delete building offscreen
+                            for (var i = 0; i < added; i ++) { //deletes as many buildings as were added
+                                buildList.splice(0,1);
+                            }
+                        }
+                    }
+                }
+            }
+
+            class EnemyFactory {
+                var enemyList;
+                var speed;
+                var path;
+                var lives;
+
+                /**@param
+                 * str: filename of animation (must be 2 frames only for enemy)
+                 * lives: how many lives allotted to each enemy (cops --> 1, swat --> 2)
+                **/
+                EnemyFactory(str, l) {
+                    enemyList = [];
+                    path = str;
+                    speed = 1;
+                    lives = l;
+                    enemyList.push(new Enemy(path, lives, speed));
+                }
+
+                void animate(odds) { //odds vary based on which enemy
+                    var willItBlend = Math.floor((Math.random() * odds) + 1);
+                    if (willItBlend == 1) {
+                        speed = Math.floor((Math.random() * 10) + 1);
+                        enemyList.push(new Enemy(path, lives, speed));
+                    }
+
+                    showEnemyList();
+                    moveEnemyList();
+                    removeEnemyList();
+                }
+
+                void moveEnemyList() {
+                    for (var i = 0; i < enemyList.length; i ++) {
+                        enemyList[i].moveEnemy();
+                    }
+                }
+
+                void showEnemyList() {
+                    for (var i = 0; i < enemyList.length; i ++) {
+                        enemyList[i].showEnemy();
+                    }
+                }
+
+                void removeEnemyList(){
+                    for (var x = 0; x < enemyList.length; x++) {
+                        if (enemyList[x].xEnemy < 0 - enemyList[x].w) {
+                            enemyList.splice(x,1);
+                            tampon = tampon - 2;
+                        }
+                    }
+                }
+
+                void clearEnemyList() {
+                    enemyList = [];
+                }
+
+                void killEnemies() {
+                    for(var i = 0; i < enemyList.length; i++) {
+                        if (gun.ammoList[0].xAmmo>= enemyList[i].xEnemy
+                            && gun.ammoList[0].yAmmo >= enemyList[i].yEnemy
+                            //&& player.yPlayer + player.h >= enemyList[i].yEnemy
+                        ){
+                            play(ouchSound);
+                            enemyList[i].lives = enemyList[i].lives - 1;
+                            gun.ammoList.splice(0,1);
+                            if (enemyList[i].lives <=0) {
+                                enemyList.splice(i,1);
+                                score = score + 1;
+                                break;
+                            }
+                        }
+                    }  
+                }
+            }
+
+            class DuaneReade {
+                var tamponList;
+
+                DuaneReade() {
+                    tamponList = [];    
+                }
+
+                void animate() {
+                    var willItBlend = Math.floor((Math.random() * 500) + 1);
+                    if (willItBlend == 50) {
+                        tamponList.push(new Tampon());
+                    }
+
+                    showTamponList();
+                    moveTamponList();
+                    removeTampon();
+                    reloadTampon();
+                }
+
+                void showTamponList() {
+                    for (var i = 0; i < tamponList.length; i ++) {
+                        tamponList[i].showTamp();
+                    }
+                }
+
+                void moveTamponList() {
+                    for (var i = 0; i < tamponList.length; i ++) {
+                        tamponList[i].moveTamp();
+                    }
+                }
+
+                void removeTampon(){
+                    for (var x = 0; x < tamponList.length; x++) {
+                        if (tamponList[x].xTamp < 0 - tamponList[x].w) {
+                            tamponList.splice(x,1);
+                        }
+                    }
+                }
+
+                void reloadTampon() {
+                    for(var i = 0; i < tamponList.length; i++) {
+                        if (player.xPlayer + player.w >= tamponList[i].xTamp 
+                            && player.xPlayer <= tamponList[i].yTamp 
+                            && player.yPlayer >= tamponList[i].yTamp
+                            && player.yPlayer <= tamponList[i].yTamp + 80){
+                            tamponList.splice(i,1);
+                            play(tamponSound);
+                            tampon = tampon + 5;
+                        }
+                    }  
+                }
+            }
+
+            //INDIVIDUALS
+            class Building {
+                var xBuild;
+                var yBuild;
+                var buildSpeed;
+
+                /**@param
+                 *x: x location
+                 *y: y location
+                 *z: width
+                 *s: speed
+                **/
+                Building(x, y, z, s) {
+                    xBuild = x;
+                    yBuild = y;
+                    buildWidth = z;
+                    buildSpeed = s;
+
+                }
+
+                void showBuilding() {
+                    fill(0); //switch to 0 if you want to chagen
+                    rect(xBuild, yBuild, buildWidth, CANVAS_HEIGHT - yBuild);
+                }
+
+                void moveBuilding() {
+                    xBuild = xBuild + buildSpeed;
+                }
+            }
+
+            class Player {
+                var yPlayer;
+                var xPlayer;
+                var h;
+                var w;
+                var jumpHeight;
+                var jumpState;
+                Animation walk;
+
+                Player(x, y) {
+                    walk = new Animation("walk", 2, 6);
+                    attack = new Animation ("attack", 2, 10);
+                    yPlayer = y;
+                    xPlayer = x;
+                    h = walk.getHeight();
+                    w = walk.getWidth();
+                    jumpHeight = 200;
+
+                    jumpState = 0;
+                }
+
+                 void showPlayer() {
+
+                    if (attacking == true) {
+                        h = attack.getHeight();
+                        w = attack.getWidth();
+                        attack.display(xPlayer, yPlayer);
+                    } else {
+                        h = walk.getHeight();
+                        w = walk.getWidth();
+                        walk.display(xPlayer, yPlayer);
+                    }
+                }
+
+                void jump() {
+                    //Jumping
+                    if (jumpState == 1 && yPlayer >= jumpHeight && drawCount % 2 == 1){
+                        yPlayer = yPlayer - 20; 
+                    } else if (yPlayer <= jumpHeight){
+                        jumpState = 2;
+                    }
+
+                    //falling
+                    if (jumpState == 2 && drawCount % 2 == 1 && yPlayer <= 340){
+                        yPlayer = yPlayer + 20;
+                    } else if (yPlayer == 340 && jumpState == 2){
+                        jumpState = 0;
+                    }
+                }
+            }
+
+            class Enemy {
+                var yEnemy;
+                var xEnemy;
+                var h;
+                var w;
+                var enemySpeed;
+                var enemyFR;
+                var path;
+                var lives;
+                Animation eWalk;
+
+                /**@param
+                 * str: filename
+                 *l: how many lives
+                 *s: speed
+                **/
+                Enemy(str, l, s) {
+                    yEnemy = 340;
+                    xEnemy = 750;
+                    enemySpeed = s;
+                    enemyFR = (enemySpeed+1) * 2;
+                    path = str;
+                    lives = l;
+                    eWalk = new Animation(path, 2, enemyFR);
+                    h = eWalk.getHeight();
+                    w = eWalk.getWidth();
+                }
+
+                void showEnemy() {
+                    eWalk.display(xEnemy, yEnemy);
+                }
+
+                void moveEnemy() {
+                    xEnemy = xEnemy - enemySpeed;
+                }
+            }
+
+            class Tampon {
+                var xTamp;
+                var yTamp;
+                var tampSpeed;
+                var randFR;
+                Animation tampPic;
+                var h;
+                var w;
+
+                Tampon() {
+                    xTamp = 750;
+                    yTamp = 250;
+                    tampSpeed = -2;
+                    randFR = Math.floor((Math.random() * 20) + 8);
+                    tampPic = new Animation("tampz", 2, randFR);
+                    h = tampPic.getHeight();
+                    w = tampPic.getWidth();
+                }
+
+                void showTamp() {
+                    tampPic.display(xTamp, yTamp);
+                }
+
+                void moveTamp() {
+                    xTamp = xTamp + tampSpeed;
+                }
+
+                void releaseTamp() {
+                    yTamp = yTamp + tampSpeed;
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <canvas id="creators"></canvas>
+        <canvas id="mycanvas"></canvas>
+    </body>
+</html> 
