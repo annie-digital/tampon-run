@@ -2,41 +2,41 @@
     <head>
         <title>Tampon Run!</title>
         <style type="text/css">
-            #mycanvas {
-                position: relative;
-                padding-left:0;
-                padding-right: 0;
-                margin-left: auto;
-                margin-right: auto;
-                margin-top: 50px;
-                display: block;
+            body {
                 border-style: solid;
                 border-width: 5px;
                 border-color: rgb(0,0,0);
             }
 
-            #creators {
+            #mycanvas {
+                margin: auto;
                 position: absolute;
-                bottom: 10px;
-                right: 10px;
-                padding-left:0;
-                padding-right: 0;
-                margin-left: auto;
-                margin-right: auto;
-                margin-top: 50px;
+                top:25px; left: 25px; bottom: 25px; right: 25px;
+
                 display: block;
+
+                border-style: solid;
+                border-width: 5px;
+                border-color: rgb(0,0,0);
             }
+
+            /*#creators {
+                float: left;
+                padding-left: 5px;
+                margin-left: 5px;
+            }*/
 
         </style>
         <script src="lib/processing-1.4.1.min.js"></script>
         <script src="lib/buzz.min.js" type="text/javascript"></script>
+        <!--
         <script type="text/processing" data-processing-target="creators">
             var drawing = 0;
             PImage namer;
 
             void setup() {
-                size(300,325);
-                background(255);
+                size(275,325);
+                //background(255);
                 sophie = new Animation("sophie", 2, 15);
                 andy = new Animation("andy",1, 10);
                 namer = loadImage("res/names0000.png");
@@ -92,6 +92,7 @@
                 }
             }
         </script>
+        -->
 
         <script type="text/processing" data-processing-target="mycanvas">
 
@@ -1111,7 +1112,8 @@
         </script>
     </head>
     <body>
-        <canvas id="creators"></canvas>
-        <canvas id="mycanvas"></canvas>
+        <!--<canvas id="creators"></canvas>-->
+        <canvas id="mycanvas"> </canvas>
+        <img src="res/andynsophie.png"/>
     </body>
 </html> 
