@@ -882,17 +882,19 @@
 
                 void killEnemies() {
                     for(var i = 0; i < enemyList.length; i++) {
-                        if (gun.ammoList[0].xAmmo>= enemyList[i].xEnemy
-                            && gun.ammoList[0].yAmmo >= enemyList[i].yEnemy
-                            //&& player.yPlayer + player.h >= enemyList[i].yEnemy
-                        ){
-                            play(ouchSound);
-                            enemyList[i].lives = enemyList[i].lives - 1;
-                            gun.ammoList.splice(0,1);
-                            if (enemyList[i].lives <=0) {
-                                enemyList.splice(i,1);
-                                score = score + 1;
-                                break;
+                        for (var n = 0; n < gun.ammoList.length; n++) {
+                            if (gun.ammoList[n].xAmmo>= enemyList[i].xEnemy
+                                && gun.ammoList[n].yAmmo >= enemyList[i].yEnemy
+                                //&& player.yPlayer + player.h >= enemyList[i].yEnemy
+                            ){
+                                play(ouchSound);
+                                enemyList[i].lives = enemyList[i].lives - 1;
+                                gun.ammoList.splice(n,1);
+                                if (enemyList[i].lives <=0) {
+                                    enemyList.splice(i,1);
+                                    score = score + 1;
+                                    break;
+                                }
                             }
                         }
                     }  
