@@ -876,6 +876,7 @@
 
                 void removeEnemyList(){
                     for (var x = 0; x < enemyList.length; x++) {
+                        console.log("happeninge");
                         if (enemyList[x].xEnemy < 0 - enemyList[x].w) {
                             enemyList.splice(x,1);
                             console.log("removed");
