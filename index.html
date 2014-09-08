@@ -255,8 +255,12 @@
 
                     if (keyCode == 38)  {
                         play(jumpSound);
-                        demo.jumpState = 1;
-                        player.jumpState = 1;
+                        if (demo.jumpState == 0) {
+                            demo.jumpState = 1;
+                        }
+                        if (player.jumpState == 0) {
+                            player.jumpState = 1;
+                        }
                     }    
                 }
 
@@ -852,6 +856,7 @@
 
                     showEnemyList();
                     moveEnemyList();
+                    confiscate();
                     removeEnemyList();
                 }
 
@@ -871,7 +876,6 @@
                     for (var x = 0; x < enemyList.length; x++) {
                         if (enemyList[x].xEnemy < 0 - enemyList[x].w) {
                             enemyList.splice(x,1);
-                            tampon = tampon - 2;
                         }
                     }
                 }
@@ -898,6 +902,18 @@
                             }
                         }
                     }  
+                }
+
+                void confiscate() {
+                    for (var i = 0; i < enemyList.length; i ++) {
+                        if(enemyList[i].xEnemy < player.xPlayer + 30
+                            && enemyList[i].xEnemy > player.xPlayer
+                            && enemyList[i].yPlayer < player.yPlayer + 60
+                            && enemyList[i].confiscated == false) {
+                            tampon = tampon - 2;
+                            enemyList[i].confiscated = true;
+                        }
+                    }
                 }
             }
 
@@ -1044,6 +1060,7 @@
                 var enemyFR;
                 var path;
                 var lives;
+                var confiscated;
                 Animation eWalk;
 
                 /**@param
@@ -1058,6 +1075,7 @@
                     enemyFR = (enemySpeed+1) * 2;
                     path = str;
                     lives = l;
+                    confiscated = false;
                     eWalk = new Animation(path, 2, enemyFR);
                     h = eWalk.getHeight();
                     w = eWalk.getWidth();
