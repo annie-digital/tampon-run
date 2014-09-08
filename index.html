@@ -878,6 +878,7 @@
                     for (var x = 0; x < enemyList.length; x++) {
                         if (enemyList[x].xEnemy < 0 - enemyList[x].w) {
                             enemyList.splice(x,1);
+                            console.log("removed");
                             tampon = tampon - 2;
                         }
                     }
