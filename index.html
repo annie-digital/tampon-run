@@ -874,7 +874,7 @@
 
                 void removeEnemyList(){
                     for (var x = 0; x < enemyList.length; x++) {
-                        if (enemyList[x].xEnemy < 0 - enemyList[x].w) {
+                        if (enemyList[x].xEnemy < -20 - enemyList[x].w) {
                             enemyList.splice(x,1);
                         }
                     }
@@ -887,7 +887,8 @@
                 void killEnemies() {
                     for(var i = 0; i < enemyList.length; i++) {
                         for (var n = 0; n < gun.ammoList.length; n ++) {
-                            if (gun.ammoList[n].xAmmo>= enemyList[i].xEnemy
+                            if (gun.ammoList[n].xAmmo >= enemyList[i].xEnemy
+                                && gun.ammoList[n].xAmmo <= enemyList[i].xEnemy + 60
                                 && gun.ammoList[n].yAmmo >= enemyList[i].yEnemy
                                 //&& player.yPlayer + player.h >= enemyList[i].yEnemy
                             ){
