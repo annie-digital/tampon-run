@@ -341,11 +341,15 @@
                 PImage statementFive;
                 PImage instructOne;
 
+                var enemyGen;
+
                 GameState(p) {
                     tamponWarning = color(0);
                     tampIntro = new Animation("ammo", 4, 10);
                     tampY = 150;
                     bigTampX = -10;
+
+                    enemyGen = 100; //initial starting random rate
 
                     page = p; //page counter
                     font = loadFont("Helvetica");
@@ -471,6 +475,7 @@
 
                 void startGame() {
                     background(100);
+
                     //background(150, 201, 223);
                     textFont(font, 30); 
                     text("score: " + score, 15, 50);
@@ -487,10 +492,22 @@
                     lamps.moveLampList();
 
                     //tamp generate
-                    duaneReade.animate();
+                    duaneReade.animate(750);
 
                     //building
                     buildings.animate();
+
+                    //enemies
+                    enemies.animate(enemyGen);
+                    switch(score) {
+                        case 50: enemyGen = 80; break;
+                        case 100: enemyGen = 70; break;
+                        case 200: enemyGen = 50; break;
+                    }
+
+                    if (gun.ammoList.length > 0) {
+                        enemies.killEnemies();
+                    }
 
                     //player
                     player.showPlayer();
@@ -506,13 +523,7 @@
                         tamponWarning = color(0);
                     }
 
-                    //enemy
-                    enemies.animate(100);
-                    if (gun.ammoList.length > 0) {
-                        enemies.killEnemies();
-                    }
-
-                    if (tampon<=0){//set to game over
+                    if (tampon< 0) {//set to game over
                         state.page= 4;
                     }
                 }
@@ -524,7 +535,7 @@
                     //text("Thanks for playing!", 200, 200);
                     over.display(0,0);
                     text("SCORE: " + score, 225, 400);
-                    if (score > highscore){
+                    if (score > highscore) {
                         highscore = score;
                     } else {
                         text("HIGH SCORE: " + highscore, 225, 435);
@@ -851,7 +862,7 @@
                 void animate(odds) { //odds vary based on which enemy
                     var willItBlend = Math.floor((Math.random() * odds) + 1);
                     if (willItBlend == 1) {
-                        speed = Math.floor((Math.random() * 10) + 1);
+                        speed = Math.floor((Math.random() * 10) + 4);
                         enemyList.push(new Enemy(path, lives, speed));
                     }
 
@@ -888,8 +899,8 @@
                 void killEnemies() {
                     for(var i = 0; i < enemyList.length; i++) {
                         for (var n = 0; n < gun.ammoList.length; n ++) {
-                            if (gun.ammoList[n].xAmmo >= enemyList[i].xEnemy
-                                && gun.ammoList[n].xAmmo <= enemyList[i].xEnemy + 60
+                            if (gun.ammoList[n].xAmmo + 66 >= enemyList[i].xEnemy + 20
+                                && gun.ammoList[n].xAmmo  + 66 <= enemyList[i].xEnemy + 60
                                 && gun.ammoList[n].yAmmo >= enemyList[i].yEnemy
                                 //&& player.yPlayer + player.h >= enemyList[i].yEnemy
                             ){
@@ -926,8 +937,8 @@
                     tamponList = [];    
                 }
 
-                void animate() {
-                    var willItBlend = Math.floor((Math.random() * 500) + 1);
+                void animate(odds) {
+                    var willItBlend = Math.floor((Math.random() * odds) + 1);
                     if (willItBlend == 50) {
                         tamponList.push(new Tampon());
                     }
